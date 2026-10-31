@@ -4,6 +4,10 @@ The starting point for greenfield projects on the `nextjs-prisma-postgres` stack
 
 Stack: Next.js 16 (App Router) · TypeScript · Prisma 7 with the `pg` adapter · Postgres 17 · Tailwind CSS 4 · Vitest · ESLint.
 
+## Data (confidential)
+
+The Interview Dataset `.xlsx` is read from a path **outside this repository** (for example via `npm run import -- --file /absolute/path/to/dataset.xlsx` once the importer exists). Do not copy the workbook into the repo. `data/`, `reports/`, and `.env` are gitignored. No seed data other than that Interview Dataset is ever loaded; there is no checked-in fixture catalogue.
+
 ## Run it locally
 
 Needs Node 24, pnpm 11 and Docker.
