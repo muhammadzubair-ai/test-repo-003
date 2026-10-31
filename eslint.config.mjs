@@ -12,7 +12,25 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Intentional boundary violation used only by the layer-boundary test.
+    "src/web/__lint_fixtures__/**",
   ]),
+  {
+    files: ["src/web/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/db", "@/db/*", "**/src/db", "**/src/db/*", "../db", "../db/*", "../../db", "../../db/*"],
+              message: "web layer must not import from src/db",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
