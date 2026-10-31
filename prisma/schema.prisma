@@ -16,3 +16,59 @@ model Note {
   text      String
   createdAt DateTime @default(now())
 }
+
+enum PartNumberAliasKind {
+  PRIMARY
+  SUPERSEDED
+}
+
+enum VocabularySource {
+  name
+  category
+  make
+  model
+  chassis
+}
+
+/// Catalogue SKU with lexical (tsvector) and semantic (vector) search columns.
+model CatalogueSku {
+  sku              String                @id
+  partNumber       String
+  partNumberNorm   String
+  nameEn           String
+  category         String?
+  brand            String?
+  fitmentSummary   String?
+  completeness     Float
+  hasFitmentRecord Boolean
+  qualityFlags     Json
+  /// Generated english tsvector on nameEn — created in raw SQL migration.
+  searchVector     Unsupported("tsvector")?
+  /// 384-dim embedding — created in raw SQL migration.
+  embedding        Unsupported("vector(384)")?
+  aliases          PartNumberAlias[]
+
+  @@index([partNumberNorm])
+  @@map("CatalogueSku")
+}
+
+model PartNumberAlias {
+  id           String              @id @default(cuid())
+  aliasNorm    String
+  sku          String
+  catalogueSku CatalogueSku        @relation(fields: [sku], references: [sku], onDelete: Cascade)
+  kind         PartNumberAliasKind
+  sourceTab    String
+  sourceColumn String
+
+  @@index([aliasNorm])
+  @@map("PartNumberAlias")
+}
+
+model VocabularyTerm {
+  term      String           @id
+  frequency Int
+  source    VocabularySource
+
+  @@map("VocabularyTerm")
+}
