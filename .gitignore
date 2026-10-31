@@ -10,6 +10,10 @@ next-env.d.ts
 .env*.local
 .DS_Store
 
+# Interview dataset and generated reports stay local (never commit).
+data/
+reports/
+
 # Agentic Delivery Studio executor kit: these hold the executor token.
 .env.ads
 .cursor/mcp.json
