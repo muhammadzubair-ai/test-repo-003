@@ -36,10 +36,13 @@ CI (`.github/workflows/ci.yml`) runs install, migrations against a Postgres serv
 ## Layout
 
 ```
-src/app/            pages and route handlers (App Router)
-src/app/api/health  health check
-src/lib/db.ts       the Prisma client (server only)
+src/web/            web-layer UI (must not import src/db)
+src/api/            api-layer domain modules
+src/db/             db layer; re-exports the Prisma client from src/lib/db.ts
+src/app/            App Router pages and route handlers
+src/lib/db.ts       the Prisma client (server only) — single client for the app
 src/lib/health.ts   health logic, unit tested
+infra/              infra notes (compose.yml stays at repo root)
 prisma/             schema and migrations
 tests/              unit tests
 ```
