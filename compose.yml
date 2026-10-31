@@ -1,7 +1,7 @@
 # Local Postgres for development: `pnpm db:up`.
 services:
   postgres:
-    image: postgres:17
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
