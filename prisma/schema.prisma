@@ -1,0 +1,18 @@
+// The data model. Add models here, then run `pnpm db:migrate --name <change>`.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// A placeholder so the first migration and the client have something to hold.
+// Replace or remove it with the first real model.
+model Note {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+}
