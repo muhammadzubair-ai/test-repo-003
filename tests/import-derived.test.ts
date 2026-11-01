@@ -56,11 +56,15 @@ async function writeDerivedFixture(path: string) {
 }
 
 function runImport(file: string) {
-  return spawnSync("pnpm", ["exec", "tsx", "infra/import/cli.ts", "--file", file], {
-    cwd: root,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
-    encoding: "utf8",
-  });
+  return spawnSync(
+    "pnpm",
+    ["exec", "tsx", "infra/import/cli.ts", "--file", file, "--skip-embeddings"],
+    {
+      cwd: root,
+      env: { ...process.env, DATABASE_URL: databaseUrl },
+      encoding: "utf8",
+    },
+  );
 }
 
 describe("import derived data", () => {
