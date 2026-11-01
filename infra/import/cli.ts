@@ -4,6 +4,7 @@ import { buildDerivedData } from "./derived";
 import { embedCatalogueSkus, resolveEmbedder } from "./embeddings";
 import { loadSheets, truncateImportTables } from "./load";
 import { applyPolicyPrecedence } from "./policies";
+import { persistDataQualityReport, planDataQuality } from "./quality";
 import { readWorkbook } from "./workbook";
 
 function parseArgs(argv: string[]) {
@@ -32,6 +33,8 @@ async function main() {
     process.exit(1);
   }
 
+  const startedAt = new Date();
+  const plan = planDataQuality(sheets);
   const db = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),
   });
@@ -43,13 +46,23 @@ async function main() {
     await db.$transaction(async (tx) => {
       const client = tx as unknown as PrismaClient;
       await truncateImportTables(client);
-      const counts = await loadSheets(client, sheets);
-      const derived = await buildDerivedData(client, sheets);
-      const policyOverrides = await applyPolicyPrecedence(client, sheets);
+      const counts = await loadSheets(client, plan.sheets);
+      const derived = await buildDerivedData(client, plan.sheets);
+      const policyOverrides = await applyPolicyPrecedence(client, plan.sheets);
       let embedded = 0;
       if (embed) embedded = await embedCatalogueSkus(client, embed);
+      const quality = await persistDataQualityReport(client, {
+        file,
+        startedAt,
+        plan,
+        supersessionSource: derived.supersessionSource,
+      });
       console.log(
-        JSON.stringify({ ok: true, file, counts, derived, policyOverrides, embedded, skipEmbeddings }, null, 2),
+        JSON.stringify(
+          { ok: true, file, counts, derived, policyOverrides, embedded, skipEmbeddings, quality: quality.counts },
+          null,
+          2,
+        ),
       );
     }, { timeout: 600_000 });
     process.exit(0);

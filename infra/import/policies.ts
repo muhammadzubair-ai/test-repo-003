@@ -14,6 +14,10 @@ import { num, str, type SheetRows } from "./workbook";
 
 const DELIVERY_POLICY_KEY = "delivery";
 
+function sourceRow(row: Record<string, unknown>, index: number): number {
+  return typeof row.__sourceRow === "number" ? row.__sourceRow : index + 2;
+}
+
 export type PolicyOverride = {
   listingId: string;
   row: number;
@@ -58,7 +62,7 @@ export async function applyPolicyPrecedence(
   const listings = (sheets.Listings ?? []).map((row, index) => ({
     listingId: str(row, "listingId", "ListingId"),
     deliveryDays: num(row, "deliveryDays", "DeliveryDays"),
-    row: index + 2,
+    row: sourceRow(row, index),
   }));
   const overrides = planPolicyOverrides(rules, listings);
   if (overrides.length === 0) return 0;
