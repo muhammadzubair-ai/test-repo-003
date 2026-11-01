@@ -17,8 +17,9 @@ The selector is whatever follows the command. Read it with these rules; numbers 
 | `up to U-30`, `upto U-30`, `..U-30` | every unit numbered 30 or lower |
 | `U-5..U-9`, `U-5 to U-9` | every unit from 5 to 9 |
 | `all` | every unit |
+| `feature N-3`, `feature N-3, N-5` | every unit whose `feature` is that ID (`N-3` is a feature, not a unit), in `sequence` order; combine with a unit form to narrow it, for example `feature N-3 up to U-30` |
 
-Forms combine, for example `U-1..U-4, U-9, U-20 to end`. Ranges and `all` cover only units `list_tasks` returns, so a gap in the numbers is fine. An ID you named that `list_tasks` does not return is reported as not available. If you cannot read the selector, ask the user to restate it; do not guess.
+A feature selector asks `list_tasks` with that `featureId`. If it returns nothing, say the feature has no units available and stop. Forms combine, for example `U-1..U-4, U-9, U-20 to end`. Ranges and `all` cover only units `list_tasks` returns, so a gap in the numbers is fine. An ID you named that `list_tasks` does not return is reported as not available. If you cannot read the selector, ask the user to restate it; do not guess.
 
 ## Setup (once)
 
