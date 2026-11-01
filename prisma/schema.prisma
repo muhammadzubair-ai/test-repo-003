@@ -30,6 +30,11 @@ enum VocabularySource {
   chassis
 }
 
+enum LatencyKind {
+  search
+  advisor
+}
+
 /// Catalogue SKU with lexical (tsvector) and semantic (vector) search columns.
 model CatalogueSku {
   sku              String                @id
@@ -47,6 +52,9 @@ model CatalogueSku {
   /// 384-dim embedding — created in raw SQL migration.
   embedding        Unsupported("vector(384)")?
   aliases          PartNumberAlias[]
+  fitments         Fitment[]
+  listings         Listing[]
+  basketItems      BasketItem[]
 
   @@index([partNumberNorm])
   @@map("CatalogueSku")
@@ -71,4 +79,202 @@ model VocabularyTerm {
   source    VocabularySource
 
   @@map("VocabularyTerm")
+}
+
+model Vehicle {
+  vehicleId            String      @id
+  make                 String
+  model                String
+  chassisCode          String
+  chassisCodeNorm      String
+  yearFrom             Int
+  yearTo               Int
+  populationByEmirate  Json
+  fitments             Fitment[]
+  vinDecodes           VinDecode[]
+
+  @@index([chassisCodeNorm])
+  @@map("Vehicle")
+}
+
+model Fitment {
+  id           String       @id @default(cuid())
+  sku          String
+  catalogueSku CatalogueSku @relation(fields: [sku], references: [sku], onDelete: Cascade)
+  vehicleId    String
+  vehicle      Vehicle      @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  raw          Json
+
+  @@index([vehicleId, sku])
+  @@index([sku])
+  @@map("Fitment")
+}
+
+model VinDecode {
+  vin       String   @id
+  make      String
+  model     String
+  chassis   String
+  year      Int
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [vehicleId], onDelete: SetNull)
+
+  @@map("VinDecode")
+}
+
+model Seller {
+  sellerId         String    @id
+  name             String
+  type             String
+  emirate          String
+  specialistMakes  String[]
+  rating           Float
+  listings         Listing[]
+
+  @@map("Seller")
+}
+
+model Listing {
+  listingId            String       @id
+  sku                  String
+  catalogueSku         CatalogueSku @relation(fields: [sku], references: [sku], onDelete: Cascade)
+  sellerId             String
+  seller               Seller       @relation(fields: [sellerId], references: [sellerId], onDelete: Cascade)
+  condition            String
+  price                Float
+  stock                Int
+  warranty             String
+  deliveryDays         Int
+  recentSales          Int
+  excludedFromRanking  Boolean
+  basketItems          BasketItem[]
+
+  @@map("Listing")
+}
+
+model OrderLine {
+  orderLineId   String   @id
+  sku           String
+  status        String
+  courier       String
+  paymentMethod String
+  returned      Boolean
+  orderDate     DateTime
+
+  @@map("OrderLine")
+}
+
+model SearchLog {
+  id                String   @id @default(cuid())
+  queryText         String
+  todayResultCount  Int
+  nextAction        String
+  searchedAt        DateTime
+
+  @@map("SearchLog")
+}
+
+model SearchEval {
+  id           String   @id @default(cuid())
+  queryText    String
+  expectedSkus String[]
+
+  @@map("SearchEval")
+}
+
+model PolicyRule {
+  key       String @id
+  value     String
+  sourceRow Int
+
+  @@map("PolicyRule")
+}
+
+model SystemStandIn {
+  systemName String @id
+  holds      String
+  standInTab String
+
+  @@map("SystemStandIn")
+}
+
+model ImportRun {
+  id                  String             @id @default(cuid())
+  startedAt           DateTime
+  finishedAt          DateTime?
+  file                String
+  counts              Json
+  supersessionSource  Json?
+  issues              DataQualityIssue[]
+
+  @@map("ImportRun")
+}
+
+model DataQualityIssue {
+  id          String    @id @default(cuid())
+  importRunId String
+  importRun   ImportRun @relation(fields: [importRunId], references: [id], onDelete: Cascade)
+  tab         String
+  row         Int
+  issueType   String
+  detail      String
+  handling    String
+
+  @@map("DataQualityIssue")
+}
+
+model Basket {
+  sessionId String       @id
+  updatedAt DateTime
+  items     BasketItem[]
+
+  @@map("Basket")
+}
+
+model BasketItem {
+  id           String       @id @default(cuid())
+  sessionId    String
+  basket       Basket       @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  sku          String
+  catalogueSku CatalogueSku @relation(fields: [sku], references: [sku], onDelete: Cascade)
+  listingId    String?
+  listing      Listing?     @relation(fields: [listingId], references: [listingId], onDelete: SetNull)
+  confirmedAt  DateTime
+
+  @@map("BasketItem")
+}
+
+model AdvisorSession {
+  id         String   @id @default(cuid())
+  sessionId  String
+  state      String
+  faultText  String?
+  parsed     Json?
+  vehicleId  String?
+  questions  Json?
+  answers    Json?
+  proposals  Json?
+  createdAt  DateTime @default(now())
+
+  @@map("AdvisorSession")
+}
+
+model EvalRun {
+  id              String          @id @default(cuid())
+  at              DateTime
+  metrics         Json
+  latencySamples  LatencySample[]
+
+  @@map("EvalRun")
+}
+
+model LatencySample {
+  id         String      @id @default(cuid())
+  evalRunId  String?
+  evalRun    EvalRun?    @relation(fields: [evalRunId], references: [id], onDelete: SetNull)
+  kind       LatencyKind
+  ms         Float
+  at         DateTime
+
+  @@map("LatencySample")
 }
