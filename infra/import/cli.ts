@@ -3,6 +3,7 @@ import { PrismaClient } from "../../src/generated/prisma/client";
 import { buildDerivedData } from "./derived";
 import { embedCatalogueSkus, resolveEmbedder } from "./embeddings";
 import { loadSheets, truncateImportTables } from "./load";
+import { applyPolicyPrecedence } from "./policies";
 import { readWorkbook } from "./workbook";
 
 function parseArgs(argv: string[]) {
@@ -44,9 +45,12 @@ async function main() {
       await truncateImportTables(client);
       const counts = await loadSheets(client, sheets);
       const derived = await buildDerivedData(client, sheets);
+      const policyOverrides = await applyPolicyPrecedence(client, sheets);
       let embedded = 0;
       if (embed) embedded = await embedCatalogueSkus(client, embed);
-      console.log(JSON.stringify({ ok: true, file, counts, derived, embedded, skipEmbeddings }, null, 2));
+      console.log(
+        JSON.stringify({ ok: true, file, counts, derived, policyOverrides, embedded, skipEmbeddings }, null, 2),
+      );
     }, { timeout: 600_000 });
     process.exit(0);
   } catch (err) {
