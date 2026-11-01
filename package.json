@@ -31,6 +31,15 @@
     "react-dom": "19.3.0",
     "server-only": "^0.0.1"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "esbuild",
+      "prisma",
+      "protobufjs",
+      "sharp"
+    ]
+  },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^24",
