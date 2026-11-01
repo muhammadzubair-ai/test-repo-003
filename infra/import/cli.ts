@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../src/generated/prisma/client";
+import { buildDerivedData } from "./derived";
 import { loadSheets, truncateImportTables } from "./load";
 import { readWorkbook } from "./workbook";
 
@@ -36,9 +37,11 @@ async function main() {
 
   try {
     await db.$transaction(async (tx) => {
-      await truncateImportTables(tx as unknown as PrismaClient);
-      const counts = await loadSheets(tx as unknown as PrismaClient, sheets);
-      console.log(JSON.stringify({ ok: true, file, counts }, null, 2));
+      const client = tx as unknown as PrismaClient;
+      await truncateImportTables(client);
+      const counts = await loadSheets(client, sheets);
+      const derived = await buildDerivedData(client, sheets);
+      console.log(JSON.stringify({ ok: true, file, counts, derived }, null, 2));
     });
     process.exit(0);
   } catch (err) {
