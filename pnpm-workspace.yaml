@@ -1,6 +1,7 @@
 allowBuilds:
-  sharp: false
+  sharp: true
   unrs-resolver: false
   prisma: true
   "@prisma/engines": true
   esbuild: true
+  protobufjs: true
