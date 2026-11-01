@@ -4,6 +4,10 @@ The starting point for greenfield projects on the `nextjs-prisma-postgres` stack
 
 Stack: Next.js 16 (App Router) · TypeScript · Prisma 7 with the `pg` adapter · Postgres 17 · Tailwind CSS 4 · Vitest · ESLint.
 
+## Data (confidential)
+
+The Interview Dataset `.xlsx` is read from a path **outside this repository** (for example via `npm run import -- --file /absolute/path/to/dataset.xlsx` once the importer exists). Do not copy the workbook into the repo. `data/`, `reports/`, and `.env` are gitignored. No seed data other than that Interview Dataset is ever loaded; there is no checked-in fixture catalogue.
+
 ## Run it locally
 
 Needs Node 24, pnpm 11 and Docker.
@@ -36,10 +40,13 @@ CI (`.github/workflows/ci.yml`) runs install, migrations against a Postgres serv
 ## Layout
 
 ```
-src/app/            pages and route handlers (App Router)
-src/app/api/health  health check
-src/lib/db.ts       the Prisma client (server only)
+src/web/            web-layer UI (must not import src/db)
+src/api/            api-layer domain modules
+src/db/             db layer; re-exports the Prisma client from src/lib/db.ts
+src/app/            App Router pages and route handlers
+src/lib/db.ts       the Prisma client (server only) — single client for the app
 src/lib/health.ts   health logic, unit tested
+infra/              infra notes (compose.yml stays at repo root)
 prisma/             schema and migrations
 tests/              unit tests
 ```
