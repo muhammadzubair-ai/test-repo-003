@@ -134,6 +134,12 @@ export async function buildDerivedData(
   }
 
   // VIN → vehicle resolution; gaps stay null and are logged as DataQualityIssue
+  const vinRow = new Map<string, number>();
+  (sheets.VIN_Decode ?? []).forEach((row, index) => {
+    const vin = str(row, "vin", "VIN").toUpperCase();
+    if (vin && !vinRow.has(vin)) vinRow.set(vin, index + 2);
+  });
+
   const importRun = await db.importRun.create({
     data: {
       id: randomUUID(),
@@ -169,10 +175,10 @@ export async function buildDerivedData(
           id: randomUUID(),
           importRunId: importRun.id,
           tab: "VIN_Decode",
-          row: 0,
+          row: vinRow.get(vin.vin) ?? 0,
           issueType: "vin_unresolved",
           detail: `VIN ${vin.vin} matched no Vehicles row`,
-          handling: "vehicleId left null",
+          handling: "no filter, log",
         },
       });
     }
