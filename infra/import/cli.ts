@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../src/generated/prisma/client";
 import { buildDerivedData } from "./derived";
+import { embedCatalogueSkus, resolveEmbedder } from "./embeddings";
 import { loadSheets, truncateImportTables } from "./load";
 import { readWorkbook } from "./workbook";
 
@@ -18,7 +19,6 @@ function parseArgs(argv: string[]) {
 
 async function main() {
   const { file, skipEmbeddings } = parseArgs(process.argv.slice(2));
-  void skipEmbeddings; // embeddings are out of scope for U-7; flag accepted for CLI compatibility
 
   if (!file) {
     console.error("Usage: pnpm import -- --file <xlsx> [--skip-embeddings]");
@@ -36,13 +36,18 @@ async function main() {
   });
 
   try {
+    // Load the embedder outside the DB transaction — model download must not hold locks.
+    const embed = skipEmbeddings ? null : await resolveEmbedder();
+
     await db.$transaction(async (tx) => {
       const client = tx as unknown as PrismaClient;
       await truncateImportTables(client);
       const counts = await loadSheets(client, sheets);
       const derived = await buildDerivedData(client, sheets);
-      console.log(JSON.stringify({ ok: true, file, counts, derived }, null, 2));
-    });
+      let embedded = 0;
+      if (embed) embedded = await embedCatalogueSkus(client, embed);
+      console.log(JSON.stringify({ ok: true, file, counts, derived, embedded, skipEmbeddings }, null, 2));
+    }, { timeout: 600_000 });
     process.exit(0);
   } catch (err) {
     console.error(err instanceof Error ? err.message : err);
