@@ -1,5 +1,10 @@
+import type { Prisma } from "../../src/generated/prisma/client";
 import type { PrismaClient } from "../../src/generated/prisma/client";
 import { bool, num, str, type SheetRows } from "./workbook";
+
+function asJson(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
 
 /** Truncate importable tables (children first). Derived tables cleared so reloads stay empty until U-9. */
 export async function truncateImportTables(db: PrismaClient): Promise<void> {
@@ -33,7 +38,7 @@ export async function loadSheets(db: PrismaClient, sheets: Record<string, SheetR
           chassisCodeNorm: chassisCode.toLowerCase().replace(/[^a-z0-9]/g, ""),
           yearFrom: num(r, "yearFrom", "YearFrom"),
           yearTo: num(r, "yearTo", "YearTo"),
-          populationByEmirate: r.populationByEmirate ?? {},
+          populationByEmirate: asJson(r.populationByEmirate ?? {}),
         };
       }),
     });
@@ -106,7 +111,7 @@ export async function loadSheets(db: PrismaClient, sheets: Record<string, SheetR
       data: fitment.map((r) => ({
         sku: str(r, "sku", "SKU"),
         vehicleId: str(r, "vehicleId", "VehicleId"),
-        raw: r,
+        raw: asJson(r),
       })),
     });
   }
